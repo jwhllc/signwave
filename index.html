@@ -278,10 +278,10 @@
   <section class="intro">
     <div class="wrap">
       <h1>Hold Signs for Hillar!</h1>
-      <p>We're covering South Baton Rouge and St. George at rush hour. Pick the shifts you can make and the corners you're willing to work.</p>
+      <p>We're covering South Baton Rouge and St. George on Election Day. Pick the shifts you can make and the corners you're willing to work.</p>
       <div class="times" aria-label="Shift times">
-        <span>Oct 20–24: 7–9 AM and 4–6 PM</span>
-        <span>Election Day, Nov 3: 2-hour shifts, 7 AM – 8 PM</span>
+        <span>Election Day, Tuesday, Nov. 3</span>
+        <span>Two-hour shifts, 7 a.m. to 8 p.m.</span>
       </div>
     </div>
   </section>
@@ -314,7 +314,8 @@
                 <input id="email" name="email" type="email" autocomplete="email" required>
               </div>
             </div>
-            <div class="field" style="max-width: 320px; margin-bottom: 0;">
+            <div class="grid-2">
+            <div class="field">
               <label for="shirt">T-shirt size</label>
               <select id="shirt" name="shirt" required>
                 <option value="" selected disabled>Select a size</option>
@@ -325,6 +326,22 @@
                 <option>2XL</option>
                 <option>3XL</option>
               </select>
+            </div>
+            <div class="field">
+              <label for="guests">How many people are coming with you?</label>
+              <select id="guests" name="guests" required>
+                <option value="0" selected>Just me</option>
+                <option value="1">1 other person</option>
+                <option value="2">2 others</option>
+                <option value="3">3 others</option>
+                <option value="4">4 others</option>
+                <option value="5+">5 or more</option>
+              </select>
+            </div>
+            </div>
+            <div class="field" id="guest-names-field" style="display: none; margin-bottom: 0;">
+              <label for="guest-names">Who's coming with you? <span style="font-weight: 400; color: var(--muted);">(optional)</span></label>
+              <input id="guest-names" name="guest-names" type="text" placeholder="Names, and T-shirt sizes if you know them">
             </div>
             <div class="error" id="contact-error" role="alert"></div>
           </fieldset>
@@ -413,12 +430,7 @@
 
   // Offsets: CDT (-05:00) through Nov 1, 2026; CST (-06:00) after.
   const DAYS = [
-    { key: '2026-10-20', label: 'Tuesday, Oct 20',   offset: '-05:00' },
-    { key: '2026-10-21', label: 'Wednesday, Oct 21', offset: '-05:00' },
-    { key: '2026-10-22', label: 'Thursday, Oct 22',  offset: '-05:00' },
-    { key: '2026-10-23', label: 'Friday, Oct 23',    offset: '-05:00' },
-    { key: '2026-10-24', label: 'Saturday, Oct 24',  offset: '-05:00' },
-    { key: '2026-11-03', label: 'Tuesday, Nov 3',    offset: '-06:00', election: true }
+    { key: '2026-11-03', label: 'Tuesday, Nov. 3',    offset: '-06:00', election: true }
   ];
   const REGULAR_SHIFTS = [
     { id: 'am', name: 'Morning',   range: '7–9 AM', start: '07:00', end: '09:00' },
@@ -426,13 +438,13 @@
   ];
   // Polls are open 7 AM – 8 PM. 13 hours, so the last block is 1 hour.
   const ELECTION_SHIFTS = [
-    { id: 'e1', name: 'Shift 1', range: '7–9 AM',   start: '07:00', end: '09:00' },
-    { id: 'e2', name: 'Shift 2', range: '9–11 AM',  start: '09:00', end: '11:00' },
-    { id: 'e3', name: 'Shift 3', range: '11 AM–1 PM', start: '11:00', end: '13:00' },
-    { id: 'e4', name: 'Shift 4', range: '1–3 PM',   start: '13:00', end: '15:00' },
-    { id: 'e5', name: 'Shift 5', range: '3–5 PM',   start: '15:00', end: '17:00' },
-    { id: 'e6', name: 'Shift 6', range: '5–7 PM',   start: '17:00', end: '19:00' },
-    { id: 'e7', name: 'Last call', range: '7–8 PM', start: '19:00', end: '20:00' }
+    { id: 'e1', name: 'Shift 1', range: '7-9 a.m.', start: '07:00', end: '09:00' },
+    { id: 'e2', name: 'Shift 2', range: '9-11 a.m.',  start: '09:00', end: '11:00' },
+    { id: 'e3', name: 'Shift 3', range: '11 a.m.-1 p.m.', start: '11:00', end: '13:00' },
+    { id: 'e4', name: 'Shift 4', range: '1-3 p.m.',   start: '13:00', end: '15:00' },
+    { id: 'e5', name: 'Shift 5', range: '3-5 p.m.',   start: '15:00', end: '17:00' },
+    { id: 'e6', name: 'Shift 6', range: '5-7 p.m.',   start: '17:00', end: '19:00' },
+    { id: 'e7', name: 'Last call', range: '7-8 p.m.', start: '19:00', end: '20:00' }
   ];
   DAYS.forEach(d => { d.shifts = d.election ? ELECTION_SHIFTS : REGULAR_SHIFTS; });
   const shiftFor = (d, id) => d.shifts.find(s => s.id === id);
@@ -506,6 +518,11 @@
   schedule.addEventListener('change', () => hide('shift-error'));
 
   // ---------- Phone formatting ----------
+  const guestSel = document.getElementById('guests');
+  guestSel.addEventListener('change', () => {
+    document.getElementById('guest-names-field').style.display = guestSel.value === '0' ? 'none' : 'block';
+  });
+
   const cell = document.getElementById('cell');
   cell.addEventListener('input', () => {
     const d = cell.value.replace(/\D/g, '').replace(/^1/, '').slice(0, 10);
@@ -550,6 +567,8 @@
     const phone = cell.value.trim();
     const email = form.email.value.trim();
     const shirt = form.shirt.value;
+    const guests = form.guests.value;
+    const guestNames = document.getElementById('guest-names').value.trim();
     const shifts = Array.from(form.querySelectorAll('input[name="shift"]:checked')).map(b => b.value);
     const spots = spotBoxes().filter(b => b.checked).map(b => b.value);
 
@@ -572,7 +591,7 @@
     if (form._gotcha.value) { showThanks({ first, shifts, spots }); return; }
 
     const fd = new FormData();
-    fd.append('_subject', 'New sign-waving volunteer: ' + first + ' ' + last);
+    fd.append('_subject', 'New sign-waving volunteer: ' + first + ' ' + last + (guests !== '0' ? ' (+' + guests + ')' : ''));
     fd.append('_cc', CC);
     fd.append('_replyto', email);
     fd.append('First Name', first);
@@ -580,6 +599,8 @@
     fd.append('Cell Phone', phone);
     fd.append('email', email);
     fd.append('T-Shirt Size', shirt);
+    fd.append('Bringing With Them', guests === '0' ? 'Just themselves' : guests + (guests === '1' ? ' other person' : ' others'));
+    if (guests !== '0' && guestNames) fd.append('Guest Names', guestNames);
     fd.append('Shift Count', String(shifts.length));
     fd.append('Shifts', shifts.map(shiftLabel).join('\n'));
     fd.append('Intersections', anySpot.checked ? 'Any (wherever needed)' : spots.join('\n'));
